@@ -1,6 +1,6 @@
 // 오프라인에서도 앱이 열리도록 화면 파일을 저장해 둬요.
 // 앱 파일을 고친 뒤에는 VERSION 숫자를 하나 올려 주세요.
-const VERSION = 'celine-v7';
+const VERSION = 'celine-v8';
 const SHELL = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/app.js', 'js/store.js', 'js/engine.js', 'js/card.js', 'js/sound.js', 'js/config.js', 'js/avatar.js', 'js/install.js',

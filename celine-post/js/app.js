@@ -71,13 +71,28 @@ function openSheet(id) {
   for (const s of sheets) $(s).hidden = s !== id;
   $('sheetBackdrop').hidden = false;
   document.body.style.overflow = 'hidden';
+  syncBack();
 }
+
+// 뒤로 가기: 앱이 꺼지지 않고 열린 창 → 우체국 탭 순서로 돌아가요
+let curView = 'draw';
+const needBack = () => sheets.some(s => !$(s).hidden) || curView !== 'draw';
+function syncBack() {
+  const has = history.state?.celine;
+  if (needBack() && !has) history.pushState({ celine: 1 }, '');
+  else if (!needBack() && has) history.back();
+}
+window.addEventListener('popstate', () => {
+  if (sheets.some(s => !$(s).hidden)) closeSheets();
+  else if (curView !== 'draw') switchView('draw');
+});
 function closeSheets() {
   try { $('momentVideo').pause(); } catch { /* 괜찮아요 */ }
   for (const s of sheets) $(s).hidden = true;
   $('iosArrow').hidden = true;
   $('sheetBackdrop').hidden = true;
   document.body.style.overflow = '';
+  syncBack();
 }
 
 // ───────────────────────── 시작 ─────────────────────────
@@ -1291,25 +1306,17 @@ async function saveMoment() {
     photoKey: state.photo?.thumb ? photoKey(state.photo.thumb) : '',
   };
 
-  loading(true);
-  try {
+  // 저장은 뒤에서 조용히 하고, 카드는 바로 보여 줘요
+  const video = state.photo?.video;
+  if (dayCardSrc) dayCardCache.set(moment.id, dayCardSrc);
+  (async () => {
     await state.store.addMoment(moment, state.photo?.thumb, state.photo?.full);
-    if (state.photo?.video) {
-      loading(true, '🎥 동영상을 가족 우체통에 올리는 중…');
-      try { await state.store.saveVideo(moment.id, state.photo.video); }
+    if (dayCardSrc) await state.store.saveCardImage(moment.id, dayCardSrc);
+    if (video) {
+      try { await state.store.saveVideo(moment.id, video); toast('🎥 동영상도 가족 우체통에 잘 올라갔어요!'); }
       catch (err) { toast(err?.message || '동영상을 올리지 못했어요. 사진은 잘 저장됐어요!', 4000); }
     }
-    if (dayCardSrc) {
-      await state.store.saveCardImage(moment.id, dayCardSrc);
-      dayCardCache.set(moment.id, dayCardSrc);
-    }
-  } catch (e) {
-    console.error(e);
-    loading(false);
-    state.saving = false;
-    toast('저장하지 못했어요. 다시 눌러 주세요.');
-    return;
-  }
+  })().catch(e => { console.error(e); toast('인터넷이 연결되면 자동으로 저장돼요 📮', 4000); });
   if (state.photo?.thumb) thumbCache.set(moment.id, state.photo.thumb);
   state.moments.unshift(moment);
   state.lastMoment = { moment, photo: state.photo?.full };
@@ -1351,6 +1358,8 @@ $('closeCardBtn').addEventListener('click', () => { closeSheets(); resetMachine(
 function switchView(view) {
   if (!['draw', 'diary', 'dex', 'guest', 'words'].includes(view)) view = 'draw';
   LS.set('view', view);
+  curView = view;
+  syncBack();
   for (const b of document.querySelectorAll('.tabbar-btn')) b.classList.toggle('active', b.dataset.view === view);
   for (const v of document.querySelectorAll('.view')) v.hidden = v.id !== `view-${view}`;
   if (view === 'diary') renderDiary();
