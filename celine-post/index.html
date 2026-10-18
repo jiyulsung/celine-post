@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>셀린 우체국</title>
+  <meta name="description" content="오늘의 셀린이 사진을 엽서로 부치면, 오늘 함께할 놀이 편지가 도착해요." />
+  <meta name="theme-color" content="#FFF3E4" />
+  <meta name="robots" content="noindex, nofollow, noimageindex" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="셀린우체국" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Gaegu:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" crossorigin />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" crossorigin />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" crossorigin />
+</head>
+<body>
+  <div id="app" class="app">
+
+    <!-- ───────── 설치 안내 (링크를 열자마자) ───────── -->
+    <section id="screen-install" class="screen" hidden>
+      <div class="inst">
+        <img class="inst-icon" src="icons/icon-192.png" alt="" />
+        <h1 class="title">셀린 우체국 💌</h1>
+        <p class="sub">셀린이를 위한 작은 우체국 선물이 도착했어요 🎁<br />먼저 <b>휴대폰 홈 화면에 설치</b>해 주세요!</p>
+
+        <div class="tabs inst-tabs" role="tablist">
+          <button class="tab" data-inst="android" type="button">🤖 갤럭시</button>
+          <button class="tab" data-inst="ios" type="button">🍎 아이폰</button>
+        </div>
+
+        <!-- 갤럭시 -->
+        <div class="inst-panel" data-panel="android">
+          <button class="btn btn-primary btn-lg full" id="instAndroidNow" type="button" hidden>📲 지금 바로 설치하기</button>
+          <p class="inst-or" id="instAndroidOr" hidden>버튼이 안 되면 아래처럼 해 주세요</p>
+          <ol class="install-steps">
+            <li><span><b>크롬</b>에서 이 화면을 열어요<br /><small>카카오톡 안에서는 설치가 안 돼요</small></span></li>
+            <li><span>오른쪽 위 <span class="ico">⋮</span> 메뉴를 눌러요</span></li>
+            <li><span><b>"홈 화면에 추가"</b> 또는 <b>"앱 설치"</b>를 눌러요</span></li>
+            <li><span><b>"설치"</b>를 눌러요</span></li>
+            <li><span>홈 화면에 아이콘이 안 보이면<br /><b>앱스(앱 목록)</b>에서 셀린우체국을 <b>꾹</b> → <b>"홈에 추가"</b></span></li>
+          </ol>
+          <p class="sub small">삼성 인터넷이라면: 아래 <span class="ico">≡</span> 메뉴 → <b>"현재 페이지 추가"</b> → <b>"홈 화면"</b></p>
+        </div>
+
+        <!-- 아이폰 -->
+        <div class="inst-panel" data-panel="ios">
+          <ol class="install-steps">
+            <li><span><b>사파리</b>에서 이 화면을 열어요<br /><small>카카오톡 안에서는 설치가 안 돼요</small></span></li>
+            <li><span>화면 아래 <span class="ico">⬆</span> <b>공유</b> 버튼을 눌러요</span></li>
+            <li><span>목록을 조금 올려서 <b>"홈 화면에 추가"</b> <span class="ico">＋</span> 를 눌러요</span></li>
+            <li><span>오른쪽 위 <b>"추가"</b>를 누르면 끝!</span></li>
+          </ol>
+        </div>
+
+        <div class="inst-after">🎁 설치가 끝나면 <b>셀린우체국 아이콘</b>(홈 화면 또는 앱스)을 눌러 주세요.<br />선물 상자가 앱 안에서 열려요!</div>
+        <button class="link-btn" id="instSkip" type="button">설치 없이 먼저 둘러볼래요</button>
+      </div>
+    </section>
+
+    <!-- ───────── 선물 인트로 ───────── -->
+    <section id="screen-gift" class="screen" hidden>
+      <div class="gift">
+        <button class="gift-box" id="giftBox" aria-label="선물 상자 열기">
+          <span class="gift-lid"></span>
+          <span class="gift-body"></span>
+          <span class="gift-ribbon"></span>
+        </button>
+        <p class="gift-hint" id="giftHint">상자를 눌러 열어 보세요</p>
+        <div class="gift-letter" id="giftLetter" hidden>
+          <img class="gift-photo" id="giftPhoto" alt="" hidden />
+          <p class="gift-to" id="giftTo"></p>
+          <p class="gift-msg" id="giftMsg"></p>
+          <p class="gift-from" id="giftFrom"></p>
+          <button class="btn btn-primary btn-lg full" id="giftNext">시작하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── 로그인 ───────── -->
+    <section id="screen-auth" class="screen" hidden>
+      <div class="auth">
+        <div class="logo-mini" aria-hidden="true">📮</div>
+        <h1 class="title">셀린 우체국 💌</h1>
+        <p class="sub">아이디로 로그인하면 <b>휴대폰을 바꿔도</b><br />셀린이 기록이 그대로 이어져요 📱➡️📱<br /><small>엄마·아빠, 한국의 할머니·할아버지도<br />같은 아이디로 들어오면 함께 볼 수 있어요 🇨🇦🇰🇷</small></p>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-auth-tab="login" role="tab" type="button">로그인</button>
+          <button class="tab" data-auth-tab="signup" role="tab" type="button">처음이에요</button>
+        </div>
+
+        <form id="authForm" class="form" autocomplete="on">
+          <label class="field">
+            <span>아이디</span>
+            <input id="authId" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="영문·숫자 4자 이상" required />
+          </label>
+          <label class="field">
+            <span>비밀번호</span>
+            <input id="authPw" name="password" type="password" autocomplete="current-password" placeholder="6자 이상" required />
+          </label>
+          <label class="field" id="authPw2Wrap" hidden>
+            <span>비밀번호 확인</span>
+            <input id="authPw2" type="password" autocomplete="new-password" placeholder="한 번 더" />
+          </label>
+          <p class="form-note" id="authNote" hidden>⚠️ 아이디와 비밀번호는 <b>꼭 메모</b>해 두세요!<br />비밀번호를 잊으면 찾을 수 없어요.</p>
+          <p class="form-error" id="authError" role="alert"></p>
+          <button class="btn btn-primary btn-lg full" id="authSubmit" type="submit">로그인</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ───────── 아기 정보 ───────── -->
+    <section id="screen-setup" class="screen" hidden>
+      <div class="setup">
+        <div class="logo-mini" aria-hidden="true">👶</div>
+        <h1 class="title">우리 아기를 알려 주세요</h1>
+        <p class="sub">나이에 맞는 미션을 골라 드릴게요.<br />언제든 설정에서 바꿀 수 있어요.</p>
+        <form id="setupForm" class="form">
+          <div class="avatar-pick">
+            <button class="avatar-btn" id="setupAvatarBtn" type="button" aria-label="아기 얼굴 사진 고르기">
+              <img id="setupAvatarImg" alt="" hidden />
+              <span id="setupAvatarPh">👶<small>얼굴 사진</small></span>
+            </button>
+            <p class="sub small">아기 얼굴 사진을 넣으면<br />우체통이 우리 아기 얼굴이 돼요! (선택)</p>
+          </div>
+          <label class="field">
+            <span>아기 이름 (애칭도 좋아요)</span>
+            <input id="setupName" maxlength="10" placeholder="예: 하루" required />
+          </label>
+          <div class="field">
+            <span>태어난 날</span>
+            <div class="date3" id="setupBirthPick"></div>
+            <input id="setupBirth" type="hidden" />
+          </div>
+          <button class="btn btn-primary btn-lg full" type="submit">다 됐어요!</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ───────── 메인 ───────── -->
+    <section id="screen-main" class="screen main" hidden>
+      <header class="topbar">
+        <button class="top-avatar" id="topAvatar" type="button" aria-label="아기 얼굴 사진 바꾸기">
+          <img id="topAvatarImg" alt="" hidden />
+          <span id="topAvatarPh">👶</span>
+        </button>
+        <div class="topbar-title">
+          <h1 id="mainTitle">셀린 우체국 💌</h1>
+          <p id="mainAge" class="age"></p>
+        </div>
+        <button class="icon-btn" id="openSettings" aria-label="설정">⚙️</button>
+      </header>
+
+      <div class="views">
+        <!-- 우체국 -->
+        <div class="view" id="view-draw">
+          <div class="bday" id="bdayBanner" hidden></div>
+          <div class="install-bar" id="installBar" hidden>
+            <img src="icons/icon-192.png" alt="" />
+            <div><b>홈 화면에 셀린 우체국 추가하기</b><small>앱처럼 바로 열 수 있어요</small></div>
+            <button class="btn btn-primary" id="installBtn" type="button">추가</button>
+            <button class="install-x" id="installClose" type="button" aria-label="닫기">✕</button>
+          </div>
+          <div class="week" id="weekDots" aria-label="이번 주 엽서"></div>
+
+          <div class="condition">
+            <p class="condition-q">오늘 나의 컨디션은?</p>
+            <div class="chips" role="radiogroup">
+              <button class="chip" data-energy="1" role="radio" type="button">😵 녹초</button>
+              <button class="chip active" data-energy="2" role="radio" type="button">🙂 보통</button>
+              <button class="chip" data-energy="3" role="radio" type="button">💪 쌩쌩</button>
+            </div>
+          </div>
+
+          <div class="post-wrap">
+            <div class="mailbox" id="machine">
+              <div class="mailbox-head">
+                <div class="machine-face" id="machineFace"><i class="eye"></i><i class="mouth"></i><i class="eye"></i></div>
+                <div class="machine-avatar" id="machineAvatar" hidden><img id="machineAvatarImg" alt="" /></div>
+                <div class="mailbox-sign">셀린 우체국</div>
+              </div>
+              <div class="mailbox-slot" aria-hidden="true"><i></i></div>
+              <div class="mail-window" id="machineGlass"></div>
+              <div class="machine-panel">
+                <button class="photo-slot postcard" id="photoSlot" type="button" aria-label="오늘 사진으로 엽서 쓰기">
+                  <span class="pc-stamp-corner" aria-hidden="true">💌</span>
+                  <span class="slot-label" id="slotLabel">📷 사진 · 🎥 동영상으로<br />엽서 쓰기</span>
+                  <span class="video-badge" id="videoBadge" hidden>🎥</span>
+                  <img id="slotThumb" class="slot-thumb" alt="" hidden />
+                </button>
+                <button class="big-button send-button" id="bigButton" type="button" disabled aria-label="엽서 부치기">
+                  <span>부치기!</span>
+                </button>
+              </div>
+              <div class="mailbox-post" aria-hidden="true"></div>
+            </div>
+            <div class="delivery" id="tray"></div>
+            <input type="file" id="photoInput" accept="image/*,video/*" hidden />
+            <p class="machine-hint" id="machineHint">사진을 넣으면 부치기 버튼에 불이 들어와요</p>
+            <button class="link-btn" id="noPhotoBtn" type="button">사진 없이 편지 받을래요</button>
+          </div>
+        </div>
+
+        <!-- 기록 -->
+        <div class="view" id="view-diary" hidden>
+          <div class="memory" id="memoryBox" hidden></div>
+          <div class="seg" role="tablist">
+            <button class="seg-btn active" data-diary-mode="cal" type="button">📅 달력</button>
+            <button class="seg-btn" data-diary-mode="album" type="button">🖼️ 엽서함</button>
+            <button class="seg-btn" data-diary-mode="taste" type="button">📊 취향</button>
+          </div>
+          <div id="tasteBox" class="taste" hidden></div>
+          <div id="albumBox" hidden>
+            <div class="album-filter" id="albumFilter">
+              <button class="af-btn active" data-af="all" type="button">전체</button>
+              <button class="af-btn" data-af="photo" type="button">📷 사진</button>
+              <button class="af-btn" data-af="video" type="button">🎥 동영상</button>
+            </div>
+            <p class="sub small" id="albumCount"></p>
+            <div class="album-grid" id="albumGrid"></div>
+          </div>
+          <div id="calBox">
+          <div class="cal-head">
+            <button class="icon-btn" id="calPrev" aria-label="이전 달" type="button">‹</button>
+            <h2 id="calTitle"></h2>
+            <button class="icon-btn" id="calNext" aria-label="다음 달" type="button">›</button>
+          </div>
+          <div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+          <div class="cal-grid" id="calGrid"></div>
+          <h3 class="section-title">이번 달의 순간들</h3>
+          <div class="moment-list" id="momentList"></div>
+          </div>
+        </div>
+
+        <!-- 도감 -->
+        <div class="view" id="view-dex" hidden>
+          <div class="dex-head">
+            <h2>셀린 우표첩</h2>
+            <p id="dexCount" class="sub"></p>
+            <div class="progress"><i id="dexBar"></i></div>
+          </div>
+          <div class="stamp-board" id="stampBoard"></div>
+          <h3 class="dex-sec">📷 셀린의 하루 우표 <small id="dcCount"></small></h3>
+          <p class="sub small" id="dcHint" style="text-align:left"></p>
+          <div class="pc-grid" id="dcGrid"></div>
+          <h3 class="dex-sec">💌 셀린 우표 <small id="pcCount"></small></h3>
+          <div class="pc-grid" id="pcGrid"></div>
+          <h3 class="dex-sec">🧸 스티커 <small id="stCount"></small></h3>
+          <div class="dex-grid" id="dexGrid"></div>
+          <p class="sub small center">편지 미션을 하나 끝낼 때마다 도장 꽝! 스티커나 우표가 나와요.<br />✨ 특급 편지에서는 반짝이 스티커가,<br />💌 편지 3통마다 셀린 우표가 나와요!</p>
+        </div>
+
+        <!-- 일기장: 오늘의 한 줄 · 새로 한 말 -->
+        <div class="view" id="view-guest" hidden>
+          <div class="guest-head">
+            <h2>💌 셀린이 방명록</h2>
+            <p class="sub">한국의 할머니·할아버지, 그리고 셀린이를 사랑하는 모두의 편지</p>
+          </div>
+          <form class="guest-form" id="guestForm">
+            <p class="guest-who">✍️ 누가 쓰는 편지예요? <small>(편지마다 골라요)</small></p>
+            <div class="who-chips" id="guestWhoChips"></div>
+            <textarea id="guestInput" rows="4" maxlength="500" placeholder="셀린이에게 하고 싶은 말을 적어 주세요 💛&#10;(예: 셀린아, 할머니가 많이 보고 싶어! 첫돌 축하해~)"></textarea>
+            <button class="btn btn-primary btn-lg full" type="submit">💌 편지 보내기</button>
+          </form>
+          <p class="sub small" id="guestCount"></p>
+          <div class="guest-list" id="guestList"></div>
+        </div>
+
+        <div class="view" id="view-words" hidden>
+          <div class="words-head">
+            <h2>셀린 일기장</h2>
+          </div>
+          <div class="seg" role="tablist">
+            <button class="seg-btn active" data-note-mode="note" type="button">📝 오늘의 한 줄</button>
+            <button class="seg-btn" data-note-mode="word" type="button">💬 새로 한 말</button>
+          </div>
+
+          <div id="noteBox">
+            <p class="sub" id="notesCount"></p>
+            <form class="note-add" id="noteAddForm">
+              <textarea id="noteAddInput" rows="3" maxlength="200" placeholder="오늘 셀린이는 어땠나요? (예: 토끼 흉내 내니까 배꼽 잡고 웃었다)"></textarea>
+              <button class="btn btn-primary full" type="submit">📝 오늘의 한 줄 남기기</button>
+            </form>
+            <div class="note-list" id="noteList"></div>
+          </div>
+
+          <div id="wordBox" hidden>
+            <p class="sub" id="wordsCount"></p>
+            <form class="word-add" id="wordAddForm">
+              <input id="wordAddInput" maxlength="30" placeholder="오늘 새로 한 말 (예: 엄마 물)" />
+              <button class="btn btn-primary" type="submit">추가</button>
+            </form>
+            <div class="word-cloud" id="wordCloud"></div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="tabbar" aria-label="메뉴">
+        <button class="tabbar-btn active" data-view="draw" type="button"><span class="ti">📮</span><span>우체국</span></button>
+        <button class="tabbar-btn" data-view="diary" type="button"><span class="ti">📅</span><span>기록</span></button>
+        <button class="tabbar-btn" data-view="dex" type="button"><span class="ti">💌</span><span>우표첩</span></button>
+        <button class="tabbar-btn" data-view="guest" type="button"><span class="ti">💛</span><span>방명록</span></button>
+        <button class="tabbar-btn" data-view="words" type="button"><span class="ti">📝</span><span>일기장</span></button>
+      </nav>
+    </section>
+
+    <!-- ───────── 시트들 ───────── -->
+    <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+
+    <div class="sheet" id="missionSheet" hidden role="dialog" aria-modal="true" aria-labelledby="missionTitle">
+      <div class="sheet-grip"></div>
+      <div class="mission-step" id="stepMission">
+        <div class="pick-label"><img id="pickFace" alt="" hidden /><span>셀린이에게 편지가 왔어요! 💌</span></div>
+        <div class="mission-badges">
+          <span class="badge gold" id="mGolden" hidden>✨ 특급 편지</span>
+          <span class="badge" id="mDomain"></span>
+          <span class="badge" id="mTime"></span>
+          <span class="badge" id="mPlace"></span>
+        </div>
+        <h2 class="mission-title" id="missionTitle"></h2>
+        <p class="mission-how" id="mHow"></p>
+        <div class="mission-why"><b>💡 이런 게 좋아요</b><p id="mWhy"></p></div>
+        <p class="mission-safety" id="mSafety" hidden></p>
+        <div class="sheet-actions">
+          <button class="btn btn-ghost" id="rerollBtn" type="button">🔄 다른 미션</button>
+          <button class="btn btn-primary btn-lg grow" id="doneBtn" type="button">했어요! 🎉</button>
+        </div>
+        <button class="link-btn" id="laterBtn" type="button">오늘은 쉴래요 (그래도 괜찮아요 🙂)</button>
+      </div>
+
+      <div class="mission-step" id="stepDiary" hidden>
+        <h2 class="sheet-title">셀린이 반응은 어땠어요?</h2>
+        <div class="reactions" role="radiogroup">
+          <button class="react" data-react="😆" type="button">😆<small>깔깔</small></button>
+          <button class="react" data-react="🥰" type="button">🥰<small>좋아함</small></button>
+          <button class="react" data-react="😐" type="button">😐<small>시큰둥</small></button>
+          <button class="react" data-react="😭" type="button">😭<small>싫어함</small></button>
+        </div>
+        <p class="sub small center">셀린이 얼굴을 톡 누르면 도장이 꽝! 찍혀요</p>
+      </div>
+
+      <div class="mission-step" id="stepCard" hidden>
+        <div class="postmark-wrap"><div class="postmark" id="postmark"></div></div>
+        <div class="sticker-get" id="stickerGet"></div>
+        <canvas id="cardCanvas" class="card-canvas" width="1080" height="1350"></canvas>
+        <div class="sheet-actions">
+          <button class="btn btn-ghost grow" id="shareCardBtn" type="button">💾 저장 · 공유</button>
+          <button class="btn btn-primary grow" id="closeCardBtn" type="button">완료</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet" id="momentSheet" hidden role="dialog" aria-modal="true">
+      <div class="sheet-grip"></div>
+      <video id="momentVideo" class="moment-video" controls playsinline hidden></video>
+      <canvas id="momentCanvas" class="card-canvas" width="1080" height="1350"></canvas>
+      <div class="cheer-box">
+        <p class="cheer-title">💛 가족 응원 <small id="cheerWhoLabel"></small></p>
+        <div class="cheer-list" id="cheerList"></div>
+        <form class="cheer-form" id="cheerForm">
+          <button class="cheer-heart" id="cheerHeart" type="button" aria-label="하트 보내기">💛</button>
+          <input id="cheerInput" maxlength="40" placeholder="셀린이에게 한마디 (예: 우리 셀린이 최고!)" />
+          <button class="btn btn-primary" type="submit">보내기</button>
+        </form>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" id="deleteMomentBtn" type="button">삭제</button>
+        <button class="btn btn-ghost grow" id="shareMomentBtn" type="button">💾 저장</button>
+        <button class="btn btn-primary grow" id="closeMomentBtn" type="button">닫기</button>
+      </div>
+    </div>
+
+    <div class="sheet" id="whoSheet" hidden role="dialog" aria-modal="true">
+      <div class="sheet-grip"></div>
+      <h2 class="sheet-title">누가 보내는 응원인가요? 💛</h2>
+      <p class="sub small center">한 번 고르면 이 휴대폰에서는 계속 이 이름으로 보내져요. (설정에서 바꿀 수 있어요)</p>
+      <div class="who-grid" id="whoGrid"></div>
+      <form class="who-other" id="whoOtherForm">
+        <input id="whoOtherInput" maxlength="8" placeholder="다른 이름 (예: 큰이모)" />
+        <button class="btn btn-ghost" type="submit">이 이름으로</button>
+      </form>
+    </div>
+
+    <div class="sheet" id="settingsSheet" hidden role="dialog" aria-modal="true">
+      <div class="sheet-grip"></div>
+      <h2 class="sheet-title">설정</h2>
+      <form id="settingsForm" class="form">
+        <div class="avatar-pick">
+          <button class="avatar-btn" id="setAvatarBtn" type="button" aria-label="아기 얼굴 사진 바꾸기">
+            <img id="setAvatarImg" alt="" hidden />
+            <span id="setAvatarPh">👶<small>얼굴 사진</small></span>
+          </button>
+          <p class="sub small">눌러서 아기 얼굴 사진을 바꿀 수 있어요</p>
+        </div>
+        <div class="rf-box">
+          <p class="rf-title">아기 반응 사진 <small>(미션 후 "아기 반응은 어땠어요?"에 나와요)</small></p>
+          <div class="rf-grid" id="rfGrid"></div>
+        </div>
+        <button class="btn btn-ghost full letter-btn" id="openLetterBtn" type="button">💌 유딩이모 편지 다시 보기</button>
+        <button class="btn btn-ghost full letter-btn" id="changeWhoBtn" type="button">💛 응원 보내는 이름 바꾸기</button>
+        <label class="field">
+          <span>미션 난이도</span>
+          <select id="setLevel">
+            <option value="-1">조금 쉽게</option>
+            <option value="0">나이에 맞게</option>
+            <option value="1">조금 어렵게</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="setBgm" /><span>🎵 배경 음악 켜기</span></label>
+        <label class="check"><input type="checkbox" id="setSound" /><span>🔔 효과음 · 셀린이 목소리 켜기</span></label>
+        <button class="btn btn-primary full" type="submit">저장</button>
+      </form>
+      <div class="backup-box">
+        <p class="rf-title">💾 기록 백업 <small>(휴대폰을 바꿀 때 필요해요)</small></p>
+        <p class="sub small" id="backupInfo">셀린이 사진과 기록은 이 휴대폰에만 저장돼요. 가끔 백업 파일로 저장해 두세요!</p>
+        <div class="sheet-actions">
+          <button class="btn btn-primary grow" id="backupSave" type="button">백업 파일 저장</button>
+          <button class="btn btn-ghost grow" id="backupLoad" type="button">백업 불러오기</button>
+        </div>
+        <input type="file" id="backupInput" accept=".json,application/json" hidden />
+      </div>
+      <div class="settings-info">
+        <p id="accountInfo" class="sub small"></p>
+        <p class="sub small" id="photoInfo"></p>
+        <p class="sub small" id="installTip"></p>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost grow" id="logoutBtn" type="button">로그아웃</button>
+        <button class="btn btn-ghost grow" id="closeSettingsBtn" type="button">닫기</button>
+      </div>
+    </div>
+
+    <!-- 유딩이모 편지 -->
+    <div class="sheet" id="letterSheet" hidden role="dialog" aria-modal="true">
+      <div class="sheet-grip"></div>
+      <div class="gift-letter letter-view">
+        <img class="gift-photo" id="letterPhoto" alt="" hidden />
+        <p class="gift-to" id="letterTo"></p>
+        <p class="gift-msg" id="letterMsg"></p>
+        <p class="gift-from" id="letterFrom"></p>
+        <button class="btn btn-primary btn-lg full" id="closeLetterBtn" type="button">닫기 💛</button>
+      </div>
+    </div>
+
+    <!-- 아기 얼굴 자르기 -->
+    <div class="sheet" id="avatarSheet" hidden role="dialog" aria-modal="true">
+      <div class="sheet-grip"></div>
+      <h2 class="sheet-title">아기 얼굴을 동그라미에 맞춰 주세요</h2>
+      <div class="crop" id="cropBox">
+        <img id="cropImg" alt="" draggable="false" />
+        <div class="crop-ring"></div>
+      </div>
+      <p class="sub small">손가락으로 끌어서 옮기고, 아래 막대로 크게·작게 해요</p>
+      <label class="zoom-row">🔍<input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" /></label>
+      <div class="sheet-actions">
+        <button class="btn btn-ghost grow" id="cropCancel" type="button">취소</button>
+        <button class="btn btn-primary grow" id="cropSave" type="button">이 얼굴로 할래요!</button>
+      </div>
+    </div>
+    <input type="file" id="avatarInput" accept="image/*" hidden />
+
+    <!-- 홈 화면에 추가 안내 (아이폰) -->
+    <div class="sheet" id="installSheet" hidden role="dialog" aria-modal="true">
+      <div class="sheet-grip"></div>
+      <img class="install-icon" src="icons/icon-192.png" alt="" />
+      <h2 class="sheet-title" id="installTitle">홈 화면에 셀린 우체국 추가하기</h2>
+      <button class="btn btn-primary btn-lg full" id="installNow" type="button" hidden>📲 지금 바로 설치하기</button>
+      <ol class="install-steps" id="installSteps"></ol>
+      <p class="sub small" id="installNote"></p>
+      <button class="btn btn-ghost btn-lg full" id="installDone" type="button">나중에 할게요</button>
+    </div>
+    <div class="ios-arrow" id="iosArrow" hidden>여기 공유 버튼!<span>⬇</span></div>
+
+    <!-- 카카오톡 · 인스타 등 앱 안 브라우저 -->
+    <div class="inapp" id="inappBox" hidden>
+      <div class="inapp-card">
+        <img src="icons/icon-192.png" alt="" />
+        <h2>크롬이나 사파리에서 열어 주세요</h2>
+        <p>카카오톡 안에서는 홈 화면에 추가할 수 없어요.<br />아래 버튼을 누르면 바로 열려요!</p>
+        <button class="btn btn-primary btn-lg full" id="inappOpen" type="button">다른 브라우저로 열기</button>
+        <button class="btn btn-ghost full" id="inappCopy" type="button">주소 복사하기</button>
+        <button class="link-btn" id="inappSkip" type="button">그냥 여기서 볼래요</button>
+      </div>
+    </div>
+
+    <!-- 앱을 열 때 시작 화면 (톡 누르면 셀린이가 "안녕") -->
+    <div class="hello-splash" id="helloSplash" hidden>
+      <div class="hello-face"><img id="helloFace" alt="" /></div>
+      <h1>셀린 우체국 💌</h1>
+      <p class="hello-tap">톡! 눌러서 셀린이 만나기 👆</p>
+    </div>
+
+    <div class="pc-view" id="pcView" hidden></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="loading" id="loading" hidden><div class="spinner"></div><p class="loading-msg" id="loadingMsg"></p></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
